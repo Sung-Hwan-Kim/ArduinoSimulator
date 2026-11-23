@@ -366,7 +366,8 @@ void MainWindow::buildMenus()
         QFileDialog::getOpenFileName(this, QStringLiteral("작업 폴더"), d, QStringLiteral("아두이노 시뮬레이터 회로 (*.asim)"));
     });
     file->addSeparator();
-    file->addAction(QStringLiteral("종료(&X)"), this, &QWidget::close);
+    // macOS: 종료/환경설정/버전 정보는 앱 메뉴(아두이노 시뮬레이터 메뉴)로 이동 (다른 OS 는 영향 없음)
+    file->addAction(QStringLiteral("종료(&X)"), this, &QWidget::close)->setMenuRole(QAction::QuitRole);
     tb->addAction(aNew);
     tb->addAction(aOpen);
     tb->addAction(aSave);
@@ -442,7 +443,9 @@ void MainWindow::buildMenus()
     QAction* aGen = tools->addAction(QStringLiteral("스케치 코드 자동 생성"), this, [this] { generateCode(true); });
     aGen->setShortcut(QKeySequence("Ctrl+G"));
     tools->addSeparator();
-    tools->addAction(QStringLiteral("환경설정..."), this, &MainWindow::showSettings)->setShortcut(QKeySequence("Ctrl+,"));
+    QAction* aSettings = tools->addAction(QStringLiteral("환경설정..."), this, &MainWindow::showSettings);
+    aSettings->setShortcut(QKeySequence("Ctrl+,"));
+    aSettings->setMenuRole(QAction::PreferencesRole);
     aWizard->setIconText(QStringLiteral("회로 마법사"));
     aAuto->setIconText(QStringLiteral("자동 배치·배선"));
     aRes->setIconText(QStringLiteral("저항 추천"));
@@ -464,7 +467,7 @@ void MainWindow::buildMenus()
     // ---- 도움말 ----
     QMenu* help = menuBar()->addMenu(QStringLiteral("도움말(&H)"));
     help->addAction(QStringLiteral("사용법"), this, &MainWindow::showHelp)->setShortcut(QKeySequence::HelpContents);
-    help->addAction(QStringLiteral("버전 정보 / 프로그램 정보"), this, [this] {
+    QAction* aAbout = help->addAction(QStringLiteral("버전 정보 / 프로그램 정보"), this, [this] {
         QMessageBox box(this);
         box.setWindowTitle(QStringLiteral("버전 정보"));
         box.setIconPixmap(QIcon(QStringLiteral(":/icons/app.png")).pixmap(72, 72));
@@ -485,6 +488,7 @@ void MainWindow::buildMenus()
                         .arg(QSysInfo::prettyProductName()));
         box.exec();
     });
+    aAbout->setMenuRole(QAction::AboutRole);
 }
 
 void MainWindow::applySettings(bool applyTheme)

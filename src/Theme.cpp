@@ -151,12 +151,23 @@ QColor synComment() { return g_dark ? QColor(106, 153, 85) : QColor(110, 140, 11
 
 QColor hintText() { return g_dark ? QColor(160, 163, 170) : QColor(90, 90, 95); }
 
+// macOS 는 1pt = 1px(72dpi 기준)이라 Windows/Linux(96dpi)보다 글자가 작게 보임 → 같은 크기로 보이게 4/3 배
+static void setPoints(QFont& f, int pointSize)
+{
+#ifdef Q_OS_MACOS
+    f.setPointSizeF(pointSize * 4.0 / 3.0);
+#else
+    f.setPointSize(pointSize);
+#endif
+}
+
 QFont uiFont(int pointSize)
 {
     QFont f;
-    f.setFamilies({ QStringLiteral("Malgun Gothic"), QStringLiteral("Noto Sans CJK KR"), QStringLiteral("NanumGothic"),
-                    QStringLiteral("Noto Sans KR"), QStringLiteral("Noto Sans"), QStringLiteral("DejaVu Sans") });
-    f.setPointSize(pointSize);
+    f.setFamilies({ QStringLiteral("Malgun Gothic"), QStringLiteral("Apple SD Gothic Neo"), QStringLiteral("Noto Sans CJK KR"),
+                    QStringLiteral("NanumGothic"), QStringLiteral("Noto Sans KR"), QStringLiteral("Noto Sans"),
+                    QStringLiteral("DejaVu Sans") });
+    setPoints(f, pointSize);
     return f;
 }
 
@@ -165,20 +176,21 @@ QFont monoFont(int pointSize, const QString& preferred)
     QFont f;
     QStringList fam;
     if (!preferred.isEmpty()) fam << preferred;
-    fam << QStringLiteral("Consolas") << QStringLiteral("DejaVu Sans Mono") << QStringLiteral("Noto Sans Mono CJK KR")
-        << QStringLiteral("Liberation Mono") << QStringLiteral("Monospace");
+    fam << QStringLiteral("Consolas") << QStringLiteral("Menlo") << QStringLiteral("DejaVu Sans Mono")
+        << QStringLiteral("Noto Sans Mono CJK KR") << QStringLiteral("Liberation Mono") << QStringLiteral("Monaco")
+        << QStringLiteral("Apple SD Gothic Neo") << QStringLiteral("Monospace");
     f.setFamilies(fam);
     f.setStyleHint(QFont::Monospace);
     f.setFixedPitch(true);
-    f.setPointSize(pointSize);
+    setPoints(f, pointSize);
     return f;
 }
 
 QFont pixelFont(int pixelSize, bool bold)
 {
     QFont f;
-    f.setFamilies({ QStringLiteral("Segoe UI"), QStringLiteral("Noto Sans"), QStringLiteral("DejaVu Sans"),
-                    QStringLiteral("Noto Sans CJK KR") });
+    f.setFamilies({ QStringLiteral("Segoe UI"), QStringLiteral("Helvetica Neue"), QStringLiteral("Noto Sans"),
+                    QStringLiteral("DejaVu Sans"), QStringLiteral("Noto Sans CJK KR"), QStringLiteral("Apple SD Gothic Neo") });
     f.setPixelSize(pixelSize);
     f.setBold(bold);
     return f;

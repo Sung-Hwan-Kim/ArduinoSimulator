@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: 'Linux 빌드를 올릴 Release 태그 (예: v1.0.0, 비우면 업로드 안 함)'
+        description: 'Linux/macOS 빌드를 올릴 Release 태그 (예: v1.0.0, 비우면 업로드 안 함)'
         required: false
         default: ''
 
@@ -17,16 +17,24 @@ permissions:
 
 jobs:
   # ---------------------------------------------------------------
-  # 스케치 인터프리터 단위 테스트 (GCC) - Qt 없이 순수 C++17
+  # 스케치 인터프리터 단위 테스트 (GCC / Clang) - Qt 없이 순수 C++17
   # ---------------------------------------------------------------
   interpreter-tests:
-    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            cxx: g++
+          - os: macos-14
+            cxx: clang++
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
-      - name: Build & run interpreter tests (g++)
+      - name: Build & run interpreter tests (${{ matrix.cxx }})
         run: |
-          g++ --version | head -1
-          g++ -std=c++17 -O2 -Wall -Wno-unused-parameter -I src/interpreter \
+          ${{ matrix.cxx }} --version | head -1
+          ${{ matrix.cxx }} -std=c++17 -O2 -Wall -Wno-unused-parameter -I src/interpreter \
               src/interpreter/*.cpp tests/interp_test.cpp -o interp_test
           ./interp_test | tee interp_test.log
           grep -q ", 0 failed" interp_test.log
@@ -109,3 +117,95 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || inputs.release_tag }}
         run: gh release upload "$TAG" ArduinoSimulator-*.AppImage --clobber
+
+  # ---------------------------------------------------------------
+  # macOS 빌드 → DMG (Universal: Apple Silicon + Intel, Qt 6.7.0 포함)
+  # ---------------------------------------------------------------
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Qt 6.7.0
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.7.0'
+          host: mac
+          target: desktop
+          arch: clang_64
+          cache: true
+
+      - name: Configure & build (arm64 + x86_64)
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64"
+          cmake --build build --parallel 4
+          lipo -info build/ArduinoSimulator.app/Contents/MacOS/ArduinoSimulator
+          plutil -p build/ArduinoSimulator.app/Contents/Info.plist
+
+      - name: Version
+        id: ver
+        run: echo "version=$(sed -n 's/^project(ArduinoSimulator VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy Qt (macdeployqt) + ad-hoc 서명
+        run: |
+          macdeployqt build/ArduinoSimulator.app -always-overwrite
+          codesign --force --deep --sign - build/ArduinoSimulator.app
+          codesign --verify --deep --strict --verbose=2 build/ArduinoSimulator.app
+          ls build/ArduinoSimulator.app/Contents/Frameworks build/ArduinoSimulator.app/Contents/PlugIns/platforms
+          du -sh build/ArduinoSimulator.app
+
+      - name: Smoke test (예제 06 실행)
+        timeout-minutes: 5
+        run: |
+          build/ArduinoSimulator.app/Contents/MacOS/ArduinoSimulator --example 6 --run --seconds 4 --screenshot "$PWD/smoke.png"
+          head -12 smoke.png.txt
+          grep -q "24.0C" smoke.png.txt
+          grep -q "설정 파일: $HOME/Library/Application Support/ArduinoSimulator/ArduinoSimulator.ini" smoke.png.txt
+
+      - name: Menu bar check (앱 메뉴 한글 확인용)
+        continue-on-error: true
+        timeout-minutes: 3
+        run: |
+          open -n build/ArduinoSimulator.app --args --example 15 --seconds 12 --screenshot "$PWD/smoke15.png"
+          sleep 7
+          screencapture -x screen.png || true
+          osascript -e 'tell application "System Events" to tell (first process whose name is "ArduinoSimulator") to get {name of every menu bar item of menu bar 1, name of every menu item of menu 1 of menu bar item 2 of menu bar 1}' || true
+          sleep 8
+
+      - name: Package DMG
+        env:
+          DMG: ArduinoSimulator-v${{ steps.ver.outputs.version }}-macos-universal.dmg
+        run: |
+          codesign --verify --deep --strict build/ArduinoSimulator.app
+          mkdir dmg
+          ditto build/ArduinoSimulator.app dmg/ArduinoSimulator.app
+          ln -s /Applications dmg/Applications
+          cp LICENSE dmg/LICENSE.txt
+          cp resources/README-macOS.txt "dmg/처음 실행 방법.txt"
+          for i in 1 2 3 4 5; do
+            hdiutil create -volname "ArduinoSimulator ${{ steps.ver.outputs.version }}" -srcfolder dmg \
+              -fs HFS+ -format UDZO -ov "$DMG" && break
+            echo "hdiutil 재시도 $i"; sleep 10
+          done
+          hdiutil verify "$DMG"
+          ls -la "$DMG"
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          if-no-files-found: warn
+          name: ArduinoSimulator-macos-universal
+          path: |
+            ArduinoSimulator-*.dmg
+            smoke.png
+            smoke.png.txt
+            smoke15.png
+            screen.png
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || inputs.release_tag }}
+        run: gh release upload "$TAG" ArduinoSimulator-*.dmg --clobber

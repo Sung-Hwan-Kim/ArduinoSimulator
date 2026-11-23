@@ -1,9 +1,12 @@
 cmake_minimum_required(VERSION 3.21)
+# macOS: 최소 지원 버전 (Qt 6.7 은 macOS 11 이상) - project() 보다 먼저 지정해야 적용됨, 다른 OS 에서는 무시
+set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "최소 macOS 버전")
 # 버전 변경은 여기서만 (exe 속성, 창 제목, 정보 창, INI 에 반영)
 project(ArduinoSimulator VERSION 1.0.0 LANGUAGES CXX)
 
 # Windows: Qt 6.7.0 (MSVC 2019 64bit) 기본 경로 - 다른 위치라면 -DCMAKE_PREFIX_PATH=... 로 지정
 # Linux  : 시스템 Qt6 (예: Ubuntu qt6-base-dev) 를 자동으로 찾음
+# macOS  : -DCMAKE_PREFIX_PATH=~/Qt/6.7.0/macos 처럼 Qt 경로 지정 → ArduinoSimulator.app 생성
 if(WIN32 AND NOT CMAKE_PREFIX_PATH)
     set(CMAKE_PREFIX_PATH "C:/Qt/Qt6.7.0/6.7.0/msvc2019_64")
 endif()
@@ -31,9 +34,24 @@ file(GLOB_RECURSE APP_SOURCES CONFIGURE_DEPENDS
 set(APP_RESOURCES ${CMAKE_SOURCE_DIR}/resources/resources.qrc)
 if(WIN32)
     list(APPEND APP_RESOURCES ${CMAKE_SOURCE_DIR}/resources/app.rc)   # 실행 파일 아이콘 + 버전 정보
+elseif(APPLE)
+    set(APP_ICNS ${CMAKE_SOURCE_DIR}/resources/app.icns)               # .app 아이콘 (Finder, Dock)
+    set_source_files_properties(${APP_ICNS} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+    list(APPEND APP_RESOURCES ${APP_ICNS})
 endif()
 
-qt_add_executable(ArduinoSimulator WIN32 ${APP_SOURCES} ${APP_RESOURCES})
+qt_add_executable(ArduinoSimulator WIN32 MACOSX_BUNDLE ${APP_SOURCES} ${APP_RESOURCES})
+
+if(APPLE)
+    set_target_properties(ArduinoSimulator PROPERTIES
+        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/resources/Info.plist.in
+        MACOSX_BUNDLE_GUI_IDENTIFIER "io.github.sung-hwan-kim.arduinosimulator"
+        MACOSX_BUNDLE_BUNDLE_NAME "아두이노 시뮬레이터"
+        MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+        MACOSX_BUNDLE_COPYRIGHT "Copyright (c) 2026 김성환 (Sung-Hwan-Kim). MIT License."
+        MACOSX_BUNDLE_ICON_FILE app.icns)
+endif()
 
 target_include_directories(ArduinoSimulator PRIVATE
     ${CMAKE_BINARY_DIR}/generated

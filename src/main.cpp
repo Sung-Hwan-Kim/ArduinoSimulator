@@ -8,6 +8,33 @@
 #include <QFont>
 #include <QIcon>
 
+#ifdef Q_OS_MACOS
+#include <QHash>
+#include <QTranslator>
+
+// macOS 앱 메뉴(서비스, 가리기, 종료 등)는 Qt 가 영어 문구로 만듦 → 한글로 바꿔 줌
+class MacAppMenuTranslator : public QTranslator
+{
+public:
+    using QTranslator::QTranslator;
+    bool isEmpty() const override { return false; }
+    QString translate(const char* context, const char* sourceText, const char* = nullptr, int = -1) const override
+    {
+        if (qstrcmp(context, "MAC_APPLICATION_MENU") != 0 || !sourceText) return {};
+        static const QHash<QString, QString> ko = {
+            { QStringLiteral("Services"), QStringLiteral("서비스") },
+            { QStringLiteral("Hide %1"), QStringLiteral("%1 가리기") },
+            { QStringLiteral("Hide Others"), QStringLiteral("기타 가리기") },
+            { QStringLiteral("Show All"), QStringLiteral("모두 보기") },
+            { QStringLiteral("Preferences..."), QStringLiteral("환경설정...") },
+            { QStringLiteral("Quit %1"), QStringLiteral("%1 종료") },
+            { QStringLiteral("About %1"), QStringLiteral("%1 정보") },
+        };
+        return ko.value(QString::fromLatin1(sourceText));
+    }
+};
+#endif
+
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
@@ -20,6 +47,10 @@ int main(int argc, char* argv[])
 
 #ifdef _WIN32
     QApplication::setFont(Theme::uiFont(9));
+#elif defined(Q_OS_MACOS)
+    // macOS: 시스템 글꼴(한글은 Apple SD 산돌고딕 Neo 로 자동 대체) 그대로 사용
+    static MacAppMenuTranslator macMenuKo;
+    QApplication::installTranslator(&macMenuKo);
 #else
     QApplication::setFont(Theme::uiFont(10));
 #endif
