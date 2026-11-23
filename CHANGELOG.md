@@ -16,3 +16,7 @@
 - 실행 파일 아이콘, 버전 정보(exe 속성, 창 제목, 버전 정보 창, 상태 표시줄)
 - 실제 입력 UI 테스트로 수정: 창 제목 중복, 실행 중 스킨 전환이 일부만 적용되던 문제, 다크 모드 체크박스가 안 보이던 문제,
   목록/속성 창 스크롤 시 콤보·스핀박스 값이 휠로 바뀌던 문제
+- Linux 지원: GitHub Actions 로 Qt 6.7.0 AppImage 빌드 (인터프리터 GCC 테스트, 화면 없이 예제 실행 검사 포함),
+  `build_linux.sh` / `build_linux_wsl.bat`, Linux 설정 파일은 `~/.config/ArduinoSimulator/`
+- 창을 닫을 때 부품보다 전선이 늦게 삭제되면 해제된 메모리에 접근하던 버그 수정 (Windows/Linux 공통)
+- MIT 라이선스
