@@ -30,6 +30,12 @@ void WireItem::detach()
     m_a = m_b = nullptr;
 }
 
+void WireItem::partDestroyed(PartItem* p)
+{
+    if (m_a == p) m_a = nullptr;
+    if (m_b == p) m_b = nullptr;
+}
+
 void WireItem::setColor(const QColor& c)
 {
     m_color = c;

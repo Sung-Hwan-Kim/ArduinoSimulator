@@ -43,7 +43,14 @@ PartItem::PartItem(const PartDef* def, const QString& ref)
     setZValue(def->isBoard ? 0 : 10);
 }
 
-PartItem::~PartItem() = default;
+PartItem::~PartItem()
+{
+    // 장면이 소멸될 때는 부품/전선 삭제 순서가 정해져 있지 않으므로,
+    // 남아 있는 전선이 삭제된 부품을 가리키지 않도록 알려 준다 (해제된 메모리 접근 방지)
+    const QList<WireItem*> ws = m_wires;
+    m_wires.clear();
+    for (WireItem* w : ws) w->partDestroyed(this);
+}
 
 QString PartItem::varName() const
 {

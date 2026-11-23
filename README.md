@@ -13,6 +13,27 @@ build_vs2019.bat
 - 실행 파일: `build\Release\ArduinoSimulator.exe` (빌드 후 `windeployqt` 로 Qt DLL 이 함께 복사됨)
 - Visual Studio 솔루션: `build\ArduinoSimulator.sln` → VS2019 에서 열어 F5 로 디버깅 가능
 
+### Linux
+
+**GitHub Actions (권장)** — 저장소에 push 하면 `.github/workflows/build.yml` 이 Ubuntu 에서 Qt 6.7.0 으로 빌드하여
+`ArduinoSimulator-vX.Y.Z-linux-x86_64.AppImage` 를 만듭니다 (Actions 탭 → 실행 결과 → Artifacts).
+`v*` 태그를 push 하거나 Actions 탭에서 *Run workflow* 에 Release 태그를 넣으면 해당 Release 에 AppImage 가 첨부됩니다.
+
+```bash
+chmod +x ArduinoSimulator-*-linux-x86_64.AppImage
+./ArduinoSimulator-*-linux-x86_64.AppImage
+```
+
+**직접 빌드 (Ubuntu 22.04+ / Windows 의 WSL)**
+
+```bash
+sudo apt install build-essential cmake ninja-build qt6-base-dev qt6-base-dev-tools qt6-qpa-plugins libgl-dev fonts-noto-cjk
+./build_linux.sh            # 빌드 → ~/build/ArduinoSimulator/ArduinoSimulator
+./build_linux.sh package    # 빌드 + build/dist/*.tar.gz
+```
+
+Windows 에서는 `build_linux_wsl.bat` 로 WSL 안에서 같은 빌드를 실행할 수 있습니다.
+
 ## 주요 기능
 
 | 기능 | 설명 |

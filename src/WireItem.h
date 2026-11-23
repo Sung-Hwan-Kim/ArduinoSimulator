@@ -28,6 +28,8 @@ public:
     void updatePath();
     // 부품에서 분리 (삭제 전)
     void detach();
+    // 연결된 부품이 먼저 삭제될 때 호출됨 (장면 소멸 시 삭제 순서가 정해져 있지 않음)
+    void partDestroyed(PartItem* p);
 
     void setCurrentInfo(double amps) { m_current = amps; update(); }
 
