@@ -26,7 +26,7 @@ jobs:
         include:
           - os: ubuntu-22.04
             cxx: g++
-          - os: macos-14
+          - os: macos-15
             cxx: clang++
     runs-on: ${{ matrix.os }}
     steps:
@@ -122,7 +122,7 @@ jobs:
   # macOS 빌드 → DMG (Universal: Apple Silicon + Intel, Qt 6.7.0 포함)
   # ---------------------------------------------------------------
   macos:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v5
 

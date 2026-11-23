@@ -34,6 +34,29 @@ sudo apt install build-essential cmake ninja-build qt6-base-dev qt6-base-dev-too
 
 Windows 에서는 `build_linux_wsl.bat` 로 WSL 안에서 같은 빌드를 실행할 수 있습니다.
 
+### macOS
+
+**GitHub Actions (권장)** — 같은 워크플로가 macOS 에서 Qt 6.7.0 으로 Universal(Apple Silicon + Intel) 빌드 후
+`macdeployqt` 로 Qt 를 넣고 ad-hoc 서명하여 `ArduinoSimulator-vX.Y.Z-macos-universal.dmg` 를 만듭니다.
+Release 첨부 방법은 Linux 와 같습니다 (`v*` 태그 push 또는 *Run workflow* 에 태그 입력).
+
+- 지원: macOS 11 (Big Sur) 이상
+- DMG 를 열고 `ArduinoSimulator.app` 을 Applications 폴더로 끌어다 놓습니다.
+- Apple 개발자 인증서로 서명·공증되지 않았으므로 처음 한 번은 허용이 필요합니다.
+  - macOS 15 이상: 한 번 실행 → 시스템 설정 → 개인정보 보호 및 보안 → **그래도 열기**
+  - macOS 11~14: Finder 에서 Control+클릭 → **열기**
+  - 또는 터미널: `xattr -dr com.apple.quarantine /Applications/ArduinoSimulator.app`
+- 단축키의 Ctrl 은 ⌘(Command) 입니다. 종료·환경설정·버전 정보는 앱 메뉴(아두이노 시뮬레이터)에 있습니다.
+
+**직접 빌드 (Xcode 명령줄 도구 + Qt 6.7.0 macOS)**
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$HOME/Qt/6.7.0/macos
+cmake --build build --parallel
+~/Qt/6.7.0/macos/bin/macdeployqt build/ArduinoSimulator.app
+open build/ArduinoSimulator.app
+```
+
 ## 주요 기능
 
 | 기능 | 설명 |
@@ -71,7 +94,7 @@ ArduinoSimulator.exe --example 6 --run --seconds 5 --screenshot out.png --geomet
 | `--geometry x,y,w,h` | 창 위치/크기 (이 옵션으로 띄운 창 위치는 INI 에 저장하지 않음) |
 | `--theme dark\|light` | 이번 실행만 스킨 모드 지정 |
 
-설정 파일은 Windows 에서는 실행 파일과 같은 폴더의 `ArduinoSimulator.ini` (쓸 수 없으면 `%LOCALAPPDATA%\ArduinoSimulator\ArduinoSimulator\`), Linux 에서는 `~/.config/ArduinoSimulator/ArduinoSimulator.ini` 입니다.
+설정 파일은 Windows 에서는 실행 파일과 같은 폴더의 `ArduinoSimulator.ini` (쓸 수 없으면 `%LOCALAPPDATA%\ArduinoSimulator\ArduinoSimulator\`), Linux 에서는 `~/.config/ArduinoSimulator/ArduinoSimulator.ini`, macOS 에서는 `~/Library/Application Support/ArduinoSimulator/ArduinoSimulator.ini` 입니다.
 
 ## 사용 순서
 
@@ -108,4 +131,4 @@ tests/               인터프리터 단위 테스트
 
 [MIT License](LICENSE) © 2026 김성환 (Sung-Hwan-Kim)
 
-배포용 zip 에 함께 들어 있는 Qt 6 라이브러리는 Qt 의 라이선스(LGPLv3)를, VC++ 런타임 DLL 은 Microsoft Visual C++ 재배포 조건을 따릅니다.
+배포 파일(zip / AppImage / DMG)에 함께 들어 있는 Qt 6 라이브러리는 Qt 의 라이선스(LGPLv3)를, Windows zip 의 VC++ 런타임 DLL 은 Microsoft Visual C++ 재배포 조건을 따릅니다.

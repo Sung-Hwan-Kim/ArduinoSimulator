@@ -18,5 +18,7 @@
   목록/속성 창 스크롤 시 콤보·스핀박스 값이 휠로 바뀌던 문제
 - Linux 지원: GitHub Actions 로 Qt 6.7.0 AppImage 빌드 (인터프리터 GCC 테스트, 화면 없이 예제 실행 검사 포함),
   `build_linux.sh` / `build_linux_wsl.bat`, Linux 설정 파일은 `~/.config/ArduinoSimulator/`
+- macOS 지원: GitHub Actions 로 Universal(Apple Silicon + Intel) DMG 빌드 (Clang 인터프리터 테스트, 예제 실행 검사 포함),
+  앱 아이콘(.icns)·한글 앱 이름, 앱 메뉴 한글화, 설정 파일은 `~/Library/Application Support/ArduinoSimulator/`
 - 창을 닫을 때 부품보다 전선이 늦게 삭제되면 해제된 메모리에 접근하던 버그 수정 (Windows/Linux 공통)
 - MIT 라이선스
