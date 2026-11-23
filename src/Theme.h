@@ -1,6 +1,7 @@
 #pragma once
 // 스킨 모드 (다크 / 라이트) - 팔레트와 캔버스/편집기 색상
 #include <QColor>
+#include <QFont>
 #include <QString>
 
 namespace Theme {
@@ -33,5 +34,10 @@ QColor synComment();
 
 // 일반 안내 문구
 QColor hintText();
+
+// 글꼴 (Windows: 맑은 고딕/Consolas, Linux: Noto CJK/DejaVu 로 자동 대체)
+QFont uiFont(int pointSize);
+QFont monoFont(int pointSize, const QString& preferred = QString());
+QFont pixelFont(int pixelSize, bool bold = false);
 
 } // namespace Theme

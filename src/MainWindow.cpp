@@ -41,11 +41,25 @@
 #include <QScrollBar>
 #include <QStatusBar>
 #include <QStyle>
+#include <QSysInfo>
 #include <QTextStream>
 #include <QToolBar>
 #include <QVBoxLayout>
 
 namespace {
+
+QString compilerName()
+{
+#if defined(_MSC_VER)
+    return QStringLiteral("MSVC %1 (Visual Studio 2019)").arg(_MSC_VER);
+#elif defined(__clang__)
+    return QStringLiteral("Clang %1.%2.%3").arg(__clang_major__).arg(__clang_minor__).arg(__clang_patchlevel__);
+#elif defined(__GNUC__)
+    return QStringLiteral("GCC %1.%2.%3").arg(__GNUC__).arg(__GNUC_MINOR__).arg(__GNUC_PATCHLEVEL__);
+#else
+    return QStringLiteral("알 수 없음");
+#endif
+}
 
 const char* kDefaultSketch =
     "// 아두이노 시뮬레이터 - 기본 스케치\n"
@@ -277,7 +291,7 @@ void MainWindow::buildUi()
     m_serialOut = new QPlainTextEdit;
     m_serialOut->setReadOnly(true);
     m_serialOut->setMaximumBlockCount(5000);
-    QFont mono("Consolas"); mono.setStyleHint(QFont::Monospace); mono.setPointSize(10);
+    QFont mono = Theme::monoFont(10);
     m_serialOut->setFont(mono);
     sv->addWidget(m_serialOut, 1);
     auto* sh = new QHBoxLayout;
@@ -460,13 +474,15 @@ void MainWindow::buildMenus()
                                    "<tr><td><b>버전</b></td><td>%1</td></tr>"
                                    "<tr><td><b>빌드 날짜</b></td><td>%2</td></tr>"
                                    "<tr><td><b>Qt</b></td><td>%3 (빌드 %4)</td></tr>"
-                                   "<tr><td><b>컴파일러</b></td><td>MSVC %5 (Visual Studio 2019)</td></tr>"
+                                   "<tr><td><b>컴파일러</b></td><td>%5</td></tr>"
+                                   "<tr><td><b>운영체제</b></td><td>%7</td></tr>"
                                    "<tr><td><b>설정 파일</b></td><td>%6</td></tr>"
                                    "</table>"
                                    "<p>부품 배치·배선, DC 회로 해석(LED·저항·센서), 아두이노 스케치 인터프리터,<br>"
                                    "자동 배치·배선·저항 추천·코드 생성을 지원합니다.</p>")
                         .arg(QStringLiteral(APP_VERSION_STR), QStringLiteral(APP_BUILD_DATE), QString::fromLatin1(qVersion()),
-                             QStringLiteral(QT_VERSION_STR), QString::number(_MSC_VER), QDir::toNativeSeparators(AppSettings::iniPath())));
+                             QStringLiteral(QT_VERSION_STR), compilerName(), QDir::toNativeSeparators(AppSettings::iniPath()))
+                        .arg(QSysInfo::prettyProductName()));
         box.exec();
     });
 }

@@ -18,9 +18,11 @@ int main(int argc, char* argv[])
     QApplication::setApplicationVersion(QStringLiteral(APP_VERSION_STR));
     QApplication::setWindowIcon(QIcon(QStringLiteral(":/icons/app.png")));
 
-    QFont f(QStringLiteral("Malgun Gothic"));
-    f.setPointSize(9);
-    QApplication::setFont(f);
+#ifdef _WIN32
+    QApplication::setFont(Theme::uiFont(9));
+#else
+    QApplication::setFont(Theme::uiFont(10));
+#endif
 
     AppSettings::instance().load();
     Catalog::setCustomParts(AppSettings::instance().customParts);

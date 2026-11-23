@@ -1,0 +1,108 @@
+name: Build
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Linux 빌드를 올릴 Release 태그 (예: v1.0.0, 비우면 업로드 안 함)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  # ---------------------------------------------------------------
+  # 스케치 인터프리터 단위 테스트 (GCC) - Qt 없이 순수 C++17
+  # ---------------------------------------------------------------
+  interpreter-tests:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build & run interpreter tests (g++)
+        run: |
+          g++ --version | head -1
+          g++ -std=c++17 -O2 -Wall -Wno-unused-parameter -I src/interpreter \
+              src/interpreter/*.cpp tests/interp_test.cpp -o interp_test
+          ./interp_test | tee interp_test.log
+          grep -q ", 0 failed" interp_test.log
+
+  # ---------------------------------------------------------------
+  # Linux 빌드 → AppImage (Qt 6.7.0 포함, 설치 없이 실행)
+  # ---------------------------------------------------------------
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt 6.7.0
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.7.0'
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
+          cache: true
+
+      - name: System packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libgl1-mesa-dev libegl1 libxkbcommon-x11-0 \
+            libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
+            libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 \
+            libfuse2 fonts-noto-cjk file
+
+      - name: Configure & build
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+          cmake --build build --parallel
+          DESTDIR="$PWD/AppDir" cmake --install build
+
+      - name: Version
+        id: ver
+        run: echo "version=$(sed -n 's/^project(ArduinoSimulator VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)" >> "$GITHUB_OUTPUT"
+
+      - name: Package AppImage
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: 1
+          OUTPUT: ArduinoSimulator-v${{ steps.ver.outputs.version }}-linux-x86_64.AppImage
+          QMAKE: ${{ env.QT_ROOT_DIR }}/bin/qmake
+          EXTRA_PLATFORM_PLUGINS: libqoffscreen.so
+        run: |
+          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+          chmod +x linuxdeploy*.AppImage
+          ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage \
+            -d AppDir/usr/share/applications/arduinosimulator.desktop \
+            -i AppDir/usr/share/icons/hicolor/256x256/apps/arduinosimulator.png
+          ls -la ArduinoSimulator-*.AppImage
+          file ArduinoSimulator-*.AppImage
+
+      - name: Smoke test (화면 없이 예제 06 실행)
+        env:
+          QT_QPA_PLATFORM: offscreen
+          APPIMAGE_EXTRACT_AND_RUN: 1
+        run: |
+          ./ArduinoSimulator-*.AppImage --example 6 --run --seconds 4 --screenshot smoke.png
+          head -12 smoke.png.txt
+          grep -q "24.0C" smoke.png.txt
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ArduinoSimulator-linux-x86_64
+          path: |
+            ArduinoSimulator-*.AppImage
+            smoke.png
+            smoke.png.txt
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || inputs.release_tag }}
+        run: gh release upload "$TAG" ArduinoSimulator-*.AppImage --clobber

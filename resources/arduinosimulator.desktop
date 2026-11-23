@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Arduino Simulator
+Name[ko]=아두이노 시뮬레이터
+Comment=Arduino circuit and sketch simulator
+Comment[ko]=아두이노 회로 배치·배선·스케치 시뮬레이터
+Exec=ArduinoSimulator %f
+Icon=arduinosimulator
+Terminal=false
+Categories=Development;Electronics;Education;
+MimeType=application/x-arduinosimulator;

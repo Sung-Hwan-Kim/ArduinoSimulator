@@ -1,4 +1,4 @@
-#include "PartItem.h"
+﻿#include "PartItem.h"
 #include "CircuitScene.h"
 #include "Theme.h"
 #include "Units.h"
@@ -20,10 +20,7 @@ const QColor kHeader(25, 25, 25);
 
 QFont pixelFont(int px, bool bold = false)
 {
-    QFont f(QStringLiteral("Segoe UI"));
-    f.setPixelSize(px);
-    f.setBold(bold);
-    return f;
+    return Theme::pixelFont(px, bold);
 }
 
 QColor bandColor(int digit)
@@ -905,7 +902,7 @@ void PartItem::drawLcd(QPainter* p)
     p->drawRect(scr);
     double cw = scr.width() / cols, ch = scr.height() / rows;
     QStringList lines = m_sim.value("lcd").toStringList();
-    QFont f(QStringLiteral("Consolas"));
+    QFont f = Theme::monoFont(9);
     f.setPixelSize(qMax(8, (int)(ch * 0.8)));
     p->setFont(f);
     for (int r = 0; r < rows; ++r) {

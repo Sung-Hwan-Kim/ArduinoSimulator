@@ -104,9 +104,7 @@ CodeEditor::CodeEditor(QWidget* parent)
 
 void CodeEditor::setEditorFont(const QString& family, int size)
 {
-    QFont f(family);
-    f.setStyleHint(QFont::Monospace);
-    f.setPointSize(size);
+    QFont f = Theme::monoFont(size, family);
     setFont(f);
     setTabStopDistance(QFontMetricsF(f).horizontalAdvance(' ') * 2);
     setViewportMargins(lineNumberAreaWidth(), 0, 0, 0);

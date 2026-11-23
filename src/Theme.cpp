@@ -151,4 +151,37 @@ QColor synComment() { return g_dark ? QColor(106, 153, 85) : QColor(110, 140, 11
 
 QColor hintText() { return g_dark ? QColor(160, 163, 170) : QColor(90, 90, 95); }
 
+QFont uiFont(int pointSize)
+{
+    QFont f;
+    f.setFamilies({ QStringLiteral("Malgun Gothic"), QStringLiteral("Noto Sans CJK KR"), QStringLiteral("NanumGothic"),
+                    QStringLiteral("Noto Sans KR"), QStringLiteral("Noto Sans"), QStringLiteral("DejaVu Sans") });
+    f.setPointSize(pointSize);
+    return f;
+}
+
+QFont monoFont(int pointSize, const QString& preferred)
+{
+    QFont f;
+    QStringList fam;
+    if (!preferred.isEmpty()) fam << preferred;
+    fam << QStringLiteral("Consolas") << QStringLiteral("DejaVu Sans Mono") << QStringLiteral("Noto Sans Mono CJK KR")
+        << QStringLiteral("Liberation Mono") << QStringLiteral("Monospace");
+    f.setFamilies(fam);
+    f.setStyleHint(QFont::Monospace);
+    f.setFixedPitch(true);
+    f.setPointSize(pointSize);
+    return f;
+}
+
+QFont pixelFont(int pixelSize, bool bold)
+{
+    QFont f;
+    f.setFamilies({ QStringLiteral("Segoe UI"), QStringLiteral("Noto Sans"), QStringLiteral("DejaVu Sans"),
+                    QStringLiteral("Noto Sans CJK KR") });
+    f.setPixelSize(pixelSize);
+    f.setBold(bold);
+    return f;
+}
+
 } // namespace Theme
