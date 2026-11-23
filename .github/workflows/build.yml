@@ -90,6 +90,7 @@ jobs:
           ./ArduinoSimulator-*.AppImage --example 6 --run --seconds 4 --screenshot smoke.png
           head -12 smoke.png.txt
           grep -q "24.0C" smoke.png.txt
+          grep -q "설정 파일: /home/runner/.config/ArduinoSimulator/ArduinoSimulator.ini" smoke.png.txt
 
       - name: Upload artifacts
         if: always()

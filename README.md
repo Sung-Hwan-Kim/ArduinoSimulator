@@ -71,7 +71,7 @@ ArduinoSimulator.exe --example 6 --run --seconds 5 --screenshot out.png --geomet
 | `--geometry x,y,w,h` | 창 위치/크기 (이 옵션으로 띄운 창 위치는 INI 에 저장하지 않음) |
 | `--theme dark\|light` | 이번 실행만 스킨 모드 지정 |
 
-설정 파일은 실행 파일과 같은 폴더의 `ArduinoSimulator.ini` 입니다. 그 폴더에 쓸 수 없으면 `%APPDATA%\ArduinoSimulator\ArduinoSimulator.ini` 를 사용합니다.
+설정 파일은 Windows 에서는 실행 파일과 같은 폴더의 `ArduinoSimulator.ini` (쓸 수 없으면 `%LOCALAPPDATA%\ArduinoSimulator\ArduinoSimulator\`), Linux 에서는 `~/.config/ArduinoSimulator/ArduinoSimulator.ini` 입니다.
 
 ## 사용 순서
 

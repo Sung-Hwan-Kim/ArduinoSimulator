@@ -15,18 +15,25 @@ QString AppSettings::iniPath()
 {
     static QString cached;
     if (!cached.isEmpty()) return cached;
-    // 1순위: 실행 파일 폴더 (포터블), 쓰기 불가하면 AppData
+    // Windows: 실행 파일 폴더 (포터블), 쓰기 불가하면 AppData
+    // Linux/macOS: 항상 사용자 설정 폴더 (~/.config/ArduinoSimulator) - AppImage 는 실행 폴더가 읽기 전용/임시
     QString dir = QCoreApplication::applicationDirPath();
     QString path = dir + "/ArduinoSimulator.ini";
-    QFileInfo fi(dir);
-    bool writable = fi.isWritable();
+    bool writable = false;
+#ifdef _WIN32
+    writable = QFileInfo(dir).isWritable();
     if (writable) {
         QFile test(dir + "/.write_test");
         writable = test.open(QIODevice::WriteOnly);
         if (writable) { test.close(); test.remove(); }
     }
+#endif
     if (!writable) {
+#ifdef _WIN32
         QString cfg = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+#else
+        QString cfg = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + "/ArduinoSimulator";
+#endif
         QDir().mkpath(cfg);
         path = cfg + "/ArduinoSimulator.ini";
     }
